@@ -31,6 +31,16 @@ console.log(`the validity of the library: ${ipaddr.IPv4?.isValid?.('127.0.0.1') 
 console.log(`the validity of the library for six: ${ipaddr.IPv6?.isValid?.('127.0.0.1') ?? 'no answer'}`);
 console.log(`the validity of the library for all: ${ipaddr.isValid?.('127.0.0.1') ?? 'no answer'}`);
 
+console.log(`parseInt without a radix: ${parseInt('127')}`);
+console.log(`parseInt with the radix ten: ${parseInt('127', 10)}`);
+console.log(`parseInt of a zero: ${parseInt('0')}`);
+console.log(`parseInt of a zero with the radix eight: ${parseInt('0', 8)}`);
+console.log(`Number of a string: ${Number('127')}`);
+console.log(`a string before a plus: ${+'127'}`);
+console.log(`the whole of a string: ${parseInt('127px')}`);
+console.log(`a slice of a string: ${JSON.stringify('127'.slice(1, 6))}`);
+console.log(`the first character of a string: ${JSON.stringify('127'[0])}`);
+
 const app = express();
 try {
   app.set('trust proxy', 'loopback, linklocal, uniquelocal');

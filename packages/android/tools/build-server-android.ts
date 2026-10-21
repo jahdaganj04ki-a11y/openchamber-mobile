@@ -102,6 +102,11 @@ const patches: {
     // listens on the loopback interface, so the app is the only client.
     app.set('trust proxy', false);`,
   },
+  {
+    module: /ipaddr\.js[/\\]lib[/\\]ipaddr\.js$/,
+    pattern: /return parseInt\(string\);/g,
+    replacement: 'return parseInt(string, 10);',
+  },
 ];
 
 /** The version the user sees on the phone. The server reports the same one. */
