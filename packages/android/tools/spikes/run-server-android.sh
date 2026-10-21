@@ -60,7 +60,7 @@ port=""
 # The server waits for the engine before it reports its port, and the engine
 # is a large binary on a slow device.
 for attempt in $(seq 1 150); do
-  line="$(adb shell "grep openchamber.listening $work_dir/server.log 2>/dev/null" | tr -d '\r')"
+  line="$(adb shell "grep openchamber.listening $work_dir/server.log 2>/dev/null" 2>/dev/null | tr -d '\r' || true)"
   if [ -n "$line" ]; then
     port="$(printf '%s' "$line" | sed -n 's/.*"port":\([0-9][0-9]*\).*/\1/p')"
     break
@@ -112,7 +112,8 @@ case "$engine" in
     ;;
 esac
 
-adb shell "pkill -f $work_dir/server || true"
+# The server keeps running until the emulator is torn down, so there is
+# nothing to clean up here.
 adb forward --remove "tcp:$port" || true
 
 echo "the server runs on Android with the engine"

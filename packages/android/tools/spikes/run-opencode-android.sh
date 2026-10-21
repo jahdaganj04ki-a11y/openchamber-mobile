@@ -42,7 +42,7 @@ read_when_ready() {
   local attempts="$2"
   local content=""
   for attempt in $(seq 1 "$attempts"); do
-    content="$(adb shell "cat $file 2>/dev/null" | tr -d '\r')"
+    content="$(adb shell "cat $file 2>/dev/null" 2>/dev/null | tr -d '\r' || true)"
     if [ -n "$content" ]; then
       printf '%s' "$content"
       return 0
@@ -59,7 +59,7 @@ read_when_ready() {
 # and the spike has no use for either.
 engine_env="HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache OPENCODE_DISABLE_AUTOUPDATE=1 OPENCODE_DISABLE_MODELS_FETCH=1"
 
-timeout 120 adb shell "cd $work_dir && env $engine_env $engine --version > $work_dir/version.log 2>&1 < /dev/null &" || true
+adb shell "cd $work_dir && env $engine_env $engine --version > $work_dir/version.log 2>&1 < /dev/null &" > /dev/null 2>&1 &
 version="$(read_when_ready "$work_dir/version.log" 60 || true)"
 echo "opencode --version: $version"
 case "$version" in
@@ -111,7 +111,8 @@ esac
 echo "shells on the device:"
 adb shell 'ls -l /system/bin/sh 2>/dev/null; command -v bash 2>/dev/null || echo "no bash"'
 
-adb shell "pkill -f 'opencode serve' || true"
+# The engine keeps running until the emulator is torn down, so there is
+# nothing to clean up here.
 adb forward --remove "tcp:$port" || true
 
 echo "the engine boots on Android"
