@@ -55,6 +55,4 @@ jobs:
           disable-animations: true
           emulator-boot-timeout: 900
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
-          env:
-            SPIKE_BINARY: ${{ github.workspace }}/out/bun-android-x64
-          script: bash packages/android/tools/spikes/run-bun-android.sh
+          script: SPIKE_BINARY=${{ github.workspace }}/out/bun-android-x64 bash packages/android/tools/spikes/run-bun-android.sh

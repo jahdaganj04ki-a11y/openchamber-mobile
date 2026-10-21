@@ -43,8 +43,7 @@ fun PermissionCard(
                 text = request.action,
                 style = MaterialTheme.typography.titleSmall,
             )
-            if (!request.message.isNullOrBlank()) {
-                val message = request.message
+            request.message?.takeIf { it.isNotBlank() }?.let { message ->
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
