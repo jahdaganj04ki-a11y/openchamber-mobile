@@ -12,6 +12,7 @@
  */
 
 import express from 'express';
+import ipaddr from '../../../../node_modules/.bun/ipaddr.js@1.9.1/node_modules/ipaddr.js/lib/ipaddr.js';
 
 const part = '(0?\\d+|0x[a-f0-9]+)';
 const fourOctet = new RegExp(`^${part}\\.${part}\\.${part}\\.${part}$`, 'i');
@@ -23,6 +24,12 @@ console.log(`a built pattern matches: ${JSON.stringify('127.0.0.1'.match(fourOct
 console.log(`a written pattern matches: ${JSON.stringify('127.0.0.1'.match(literal)?.[0] ?? null)}`);
 console.log(`a simple pattern matches: ${JSON.stringify('127.0.0.1'.match(/^\d+\.\d+\.\d+\.\d+$/)?.[0] ?? null)}`);
 console.log(`the flags of the built pattern: ${fourOctet.flags}`);
+
+console.log(`the library: ${Object.keys(ipaddr).join(', ')}`);
+console.log(`the parser of the library: ${JSON.stringify(ipaddr.IPv4?.parser?.('127.0.0.1') ?? null)}`);
+console.log(`the validity of the library: ${ipaddr.IPv4?.isValid?.('127.0.0.1') ?? 'no answer'}`);
+console.log(`the validity of the library for six: ${ipaddr.IPv6?.isValid?.('127.0.0.1') ?? 'no answer'}`);
+console.log(`the validity of the library for all: ${ipaddr.isValid?.('127.0.0.1') ?? 'no answer'}`);
 
 const app = express();
 try {

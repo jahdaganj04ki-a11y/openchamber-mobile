@@ -94,6 +94,14 @@ const patches: {
     pattern: /const OPENCHAMBER_VERSION = \(\(\) => \{[\s\S]*?\n\}\)\(\);/g,
     replacement: `const OPENCHAMBER_VERSION = ${JSON.stringify(readAppVersion())};`,
   },
+  {
+    module: /packages\/web\/server\/index\.js$/,
+    pattern: /app\.set\('trust proxy', 'loopback, linklocal, uniquelocal'\);/g,
+    replacement: `// The phone has no proxy in front of its server, and the address
+    // library of the trust list does not answer on a phone. The server
+    // listens on the loopback interface, so the app is the only client.
+    app.set('trust proxy', false);`,
+  },
 ];
 
 /** The version the user sees on the phone. The server reports the same one. */
