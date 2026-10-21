@@ -24,6 +24,9 @@ jobs:
           java-version: 21
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools'
+          accept-android-sdk-licenses: true
 
       - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
@@ -64,6 +67,11 @@ jobs:
           path: out/bun-android-arm64
           if-no-files-found: error
 
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools'
+          accept-android-sdk-licenses: true
+
       - name: Start the emulator
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:
@@ -73,4 +81,4 @@ jobs:
           profile: Nexus 6
           disable-animations: true
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
-          script: packages/android/tools/spikes/run-bun-android.sh
+          script: bash packages/android/tools/spikes/run-bun-android.sh
