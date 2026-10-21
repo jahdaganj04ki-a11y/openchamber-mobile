@@ -195,10 +195,19 @@ about Android, and uses it instead of the one from the registry.
 
 `git` and `rg` are the open part. Ripgrep 15.0.0 builds for Android the
 same way the library of the terminal does, and the server finds it on the
-path of the app. Git is a different kind of work: it is a C program with a
-chain of libraries under it, and the plan counts the source control surface
-as read-only on the phone if git cannot be provided. That is a decision for
-the maintainer.
+path of the app. Git is a different kind of work, and the plan leaves the
+decision to the maintainer. The three ways out, and what each one costs:
+
+| Way | What it gives | What it costs |
+| --- | --- | --- |
+| A build of git for Android | The source control surface works as it does on the desktop | Git is a C program with a chain of libraries under it. A build without curl and without TLS is enough for local repositories, and it is days of work in CI |
+| No git on the phone | The source control surface is read-only: the files of the project, no changes | Nothing to build. The plan counts this as the fallback |
+| Git in the app, with JGit | The changes list, the diff and the commit work on the phone | The app stops being a client of the server for this surface, and the logic of the server is written twice |
+
+The recommendation is the second one for the first release of the phone, and
+the first one after that. The third one is the wrong shape: the app exists
+to be the interface of the server, and the server is the part that knows how
+OpenCode works.
 
 
 
