@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenChamber</string>
+    <string name="runtime_notification_channel">OpenChamber runtime</string>
+    <string name="runtime_notification_title">OpenChamber is running</string>
+    <string name="runtime_notification_stop">Stop</string>
+</resources>

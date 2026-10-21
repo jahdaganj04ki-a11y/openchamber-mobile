@@ -49,6 +49,12 @@ HTTP remains the authenticated command plane for create, resize, appearance upda
 
 The WebSocket path must remain in both `isUrlAuthWebSocketPath` and relay `ALLOWED_WS_PATHS`. The client must use `getRuntimeUrlResolver().websocket()` and `openRuntimeWebSocket`; direct local URLs or raw browser WebSockets break relay and URL-token authentication.
 
+## Decisions
+
+### Why the process table comes from `/proc` on Android and not from `ps`
+
+`shutdown.js` reads `/proc` on Linux and falls back to `/bin/ps` with BSD flags everywhere else. Android is Linux-based and ships neither `procps` nor `/bin/ps`, so the fallback would throw and the shutdown path would only reach its force-kill branch, dropping the 20-second SIGTERM grace that terminal workloads rely on. The `android` platform value therefore takes the `/proc` branch. The alternative, bundling `procps` into the APK, was rejected because `/proc` is already there and needs no extra binary.
+
 ## Verification
 
 Run:

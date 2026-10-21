@@ -10,7 +10,8 @@ const SHUTDOWN_GRACE_MS = 20_000;
 // Killing only -pty.pid misses those jobs; closing the PTY first sends SIGHUP.
 const readProcesses = async () => {
   // Minimal server/container installations need not ship procps.
-  if (process.platform === 'linux') {
+  // Android is Linux-based and ships no ps either, so it reads /proc as well.
+  if (process.platform === 'linux' || process.platform === 'android') {
     const processes = new Map();
     for (const entry of await fs.readdir('/proc')) {
       if (!/^\d+$/.test(entry)) continue;

@@ -796,6 +796,7 @@ headers }` or v1 `{ npm, options }`. The stored entry is always a
   - `GET /health`
   - `POST /api/system/shutdown`
   - `GET /api/system/info`: open before login, because the CLI matches `pid` against its pid file to recognise its own server. `port` and `tunnelUrl` are included only for a caller `isRequestAuthorized` accepts.
+- The runtime name is `process.env.OPENCHAMBER_RUNTIME || 'web'`, reported by `GET /health` and `GET /api/system/info`. `android` is a supported value: every runtime check in the server compares against `desktop`, so an `android` server behaves like a `web` server, and the native Android client uses the value to tell itself apart from the desktop shell. The name is passed through rather than mapped, so a value nobody knows yet still reaches the client as written.
 - `isRequestAuthorized(req, res, { tunnelAuthController, uiAuthController })`: whether a request carries credentials `/api` would accept, without refusing it. Routes open before login use it to leave private details out.
  - `registerAuthAndAccessRoutes(app, dependencies)`: registers browser auth/session exchange and API access middleware:
    - `GET /auth/session`
