@@ -18,6 +18,11 @@ outfile="${3:?the file to write the library to}"
 api="${ANDROID_API_LEVEL:-21}"
 ndk="${ANDROID_NDK_HOME:?the NDK of the Android SDK is needed}"
 
+# The build runs in the folder of the crate, so the file to write is named
+# before the build moves there.
+mkdir -p "$(dirname "$outfile")"
+outfile="$(cd "$(dirname "$outfile")" && pwd)/$(basename "$outfile")"
+
 case "$target" in
   aarch64-linux-android) triple="aarch64-linux-android" ;;
   x86_64-linux-android) triple="x86_64-linux-android" ;;
