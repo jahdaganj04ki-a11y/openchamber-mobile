@@ -112,6 +112,19 @@ through the app, so the command line entry does not run at all.
 The build fails when one of the three patches does not match. A server that
 changed under the build is a build that cannot be trusted.
 
+### Why the phone trusts no proxy
+
+The server believes the forwarded headers only from a proxy on the machine
+or on a private network, and it asks the `proxy-addr` library to compile
+that list. On a phone the library says that `127.0.0.1` is not an address,
+and the server does not start.
+
+The phone has no proxy in front of its server: the app talks to the server
+over the loopback interface, and nothing else can reach it. So the build
+turns the trust off on the phone and leaves it on everywhere else. The
+server still knows the address of the client, because that is the address
+of the socket.
+
 ### Why the guest panel catalog lives in the app's storage
 
 The server reads the catalog of the guest panels the app ships from a
