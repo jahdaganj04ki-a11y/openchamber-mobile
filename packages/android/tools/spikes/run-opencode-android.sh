@@ -28,14 +28,14 @@ for attempt in $(seq 1 30); do
 done
 
 adb shell "rm -rf $work_dir && mkdir -p $work_dir"
-adb push "$binary" /data/local/tmp/opencode
-adb shell 'chmod 755 /data/local/tmp/opencode'
+adb push "$binary" /data/local/tmp/opencode-spike/opencode
+adb shell 'chmod 755 /data/local/tmp/opencode-spike/opencode'
 
 # The engine writes its data, its config and its logs below the work
 # directory. The shell user of the emulator has no home of its own.
 adb shell "chmod 777 $work_dir"
 
-version="$(adb shell "cd $work_dir && HOME=$work_dir /data/local/tmp/opencode --version" | tr -d '\r\n')"
+version="$(adb shell "cd $work_dir && HOME=$work_dir /data/local/tmp/opencode-spike/opencode --version" | tr -d '\r\n')"
 echo "opencode --version: $version"
 case "$version" in
   *"$expected_version"*) ;;
@@ -51,7 +51,7 @@ esac
 # health of the engine. The engine asks for a password, and the server that
 # manages an engine gives it one.
 password="openchamber-spike"
-adb shell "cd $work_dir && HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache OPENCODE_SERVER_PASSWORD=$password nohup /data/local/tmp/opencode serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 &" || true
+adb shell "cd $work_dir && HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache OPENCODE_SERVER_PASSWORD=$password nohup /data/local/tmp/opencode-spike/opencode serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 &" || true
 
 adb forward "tcp:$port" "tcp:$port"
 

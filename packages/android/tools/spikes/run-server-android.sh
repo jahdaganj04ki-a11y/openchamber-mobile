@@ -9,7 +9,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-root="$(cd "$here/../../.." && pwd)"
+root="$(cd "$here/../../../.." && pwd)"
 server_binary="${SPIKE_SERVER_BINARY:-$root/out/server-android-x64}"
 engine_binary="${SPIKE_ENGINE_BINARY:-$root/out/opencode-android-x64}"
 work_dir=/data/local/tmp/openchamber-spike

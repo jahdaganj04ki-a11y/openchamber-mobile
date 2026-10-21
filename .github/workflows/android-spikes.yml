@@ -209,6 +209,10 @@ jobs:
         run: |
           git clone --depth 1 --branch v0.5.1 https://github.com/sursaone/bun-pty.git .work/bun-pty
 
+      - name: Check out ripgrep
+        run: |
+          git clone --depth 1 --branch 15.0.0 https://github.com/BurntSushi/ripgrep.git .work/ripgrep
+
       - name: Compile the library of the pseudoterminal
         run: |
           mkdir -p out
@@ -216,6 +220,13 @@ jobs:
           bash packages/android/tools/spikes/build-pty-android.sh \
             x86_64-linux-android .work/bun-pty/rust-pty out/librust_pty.so
           file out/librust_pty.so
+
+      - name: Compile ripgrep
+        run: |
+          ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/26.1.10909125" \
+          bash packages/android/tools/spikes/build-rg-android.sh \
+            x86_64-linux-android .work/ripgrep out/rg
+          file out/rg
 
       - name: Compile the check for the emulator
         run: |

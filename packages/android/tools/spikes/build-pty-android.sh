@@ -37,6 +37,24 @@ fi
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$clang"
 export CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="$clang"
 
+# The terminal of the Rust code needs the `nix` library, and `nix` needs the
+# `termios` crate. That crate knows nothing about Android, although the
+# settings of a terminal have the same layout there as on Linux. So the crate
+# is fetched, told about Android, and used instead of the one from the
+# registry.
+termios_dir="$(dirname "$crate")/termios-0.2.2"
+if [ ! -d "$termios_dir" ]; then
+  archive="$(mktemp -d)/termios.crate"
+  curl -sSL "https://crates.io/api/v1/crates/termios/0.2.2/download" -o "$archive"
+  tar xzf "$archive" -C "$(dirname "$termios_dir")"
+  rm -rf "$(dirname "$archive")"
+fi
+sed -i 's/#\[cfg(target_os = "linux")\]/#[cfg(any(target_os = "linux", target_os = "android"))]/g' \
+  "$termios_dir/src/os/mod.rs"
+if ! grep -q "termios = { path" "$crate/Cargo.toml"; then
+  printf '\n[patch.crates-io]\ntermios = { path = "../termios-0.2.2" }\n' >> "$crate/Cargo.toml"
+fi
+
 cd "$crate"
 cargo build --release --target "$target"
 cp "target/$target/release/librust_pty.so" "$outfile"

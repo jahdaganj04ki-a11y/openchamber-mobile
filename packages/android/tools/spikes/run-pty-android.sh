@@ -8,7 +8,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-root="$(cd "$here/../../.." && pwd)"
+root="$(cd "$here/../../../.." && pwd)"
 library="${SPIKE_PTY_LIBRARY:-$root/out/librust_pty.so}"
 program="${SPIKE_PTY_PROGRAM:-$root/out/pty-android-x64}"
 work_dir=/data/local/tmp/pty-spike
