@@ -52,7 +52,10 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 6
-          disable-animations: true
+          cores: 2
+          ram-size: 4096M
+          disable-animations: false
+          disable-spellchecker: true
           emulator-boot-timeout: 900
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: SPIKE_BINARY=${{ github.workspace }}/out/bun-android-x64 bash packages/android/tools/spikes/run-bun-android.sh
@@ -113,7 +116,10 @@ jobs:
           target: default
           arch: x86_64
           profile: Nexus 6
-          disable-animations: true
+          cores: 2
+          ram-size: 4096M
+          disable-animations: false
+          disable-spellchecker: true
           emulator-boot-timeout: 900
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: SPIKE_BINARY=${{ github.workspace }}/out/opencode-android-x64 bash packages/android/tools/spikes/run-opencode-android.sh
