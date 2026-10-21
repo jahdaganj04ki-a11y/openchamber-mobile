@@ -175,7 +175,7 @@ program. It is not patched over.
 | `bun-android.ts` | Can a compiled Bun binary run on Android? | Answered: yes |
 | OpenCode on Android | Can the engine be built and booted for Android? | Answered: yes |
 | Server on Android | Can the server boot with the engine it manages? | Answered: yes |
-| `pty-android.ts` | Can the phone have a pseudoterminal? | Running in CI |
+| `pty-android.ts` | Can the phone have a pseudoterminal? | Answered: yes |
 | The native tools | Can the phone have git and a search? | Open |
 
 The Bun spike runs on an Android 15 emulator in CI. The compiled binary starts,
@@ -196,8 +196,13 @@ serves its info route. The emulator has no bash, so the shell of the agent
 falls back to the shell of Android.
 
 The server spike boots the server on the emulator the way the app boots it,
-with the engine in the folder the server is told about, and asks the server
-for its health and for the health of the engine. The server answers both.
+with the engine in the folder the server is told about. The server finds the
+engine, starts it, and answers `{"healthy":true}` for the health of the
+engine and `{"status":"ok"}` for its own health.
+
+The terminal spike builds the library of the pseudoterminal for Android and
+runs a shell on the emulator through it. The library is the Rust part of
+`bun-pty`, and it links against the C library of the device.
 
 ## The native tools the phone still needs
 
