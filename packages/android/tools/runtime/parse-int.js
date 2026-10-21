@@ -14,13 +14,17 @@
  * The module is imported first by the entry of the engine, so the rule is in
  * place before any other module runs.
  */
-
 const original = globalThis.parseInt;
 
-globalThis.parseInt = function parseInt(value, radix) {
+const patched = function parseInt(value, radix) {
   if (radix !== undefined) return original(value, radix);
   const text = String(value).trim();
   return original(value, /^[+-]?0[xX]/.test(text) ? 16 : 10);
 };
 
-export default globalThis.parseInt;
+globalThis.parseInt = patched;
+// `Number.parseInt` is the same function under another name, and the code
+// of the engine uses both.
+Number.parseInt = patched;
+
+export default patched;
