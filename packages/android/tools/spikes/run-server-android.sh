@@ -103,7 +103,18 @@ case "$health" in
     ;;
 esac
 
-engine="$(curl -sf --max-time 90 "http://127.0.0.1:$port/api/opencode/health?wait=60000" 2>/dev/null || true)"
+engine=""
+# The route answers as soon as the engine is ready, and it answers with an
+# error while the engine is still starting. So the probe waits for the
+# answer that says the engine is healthy.
+for attempt in $(seq 1 90); do
+  engine="$(curl -s --max-time 20 "http://127.0.0.1:$port/api/opencode/health?wait=8000" 2>/dev/null || true)"
+  if printf '%s' "$engine" | grep -q '"healthy":true'; then
+    break
+  fi
+  sleep 2
+done
+
 if [ -z "$engine" ]; then
   echo "The server did not answer the health of the engine" >&2
   echo "--- the server log ---" >&2

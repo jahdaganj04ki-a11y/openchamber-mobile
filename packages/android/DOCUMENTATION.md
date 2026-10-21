@@ -125,6 +125,22 @@ turns the trust off on the phone and leaves it on everywhere else. The
 server still knows the address of the client, because that is the address
 of the socket.
 
+### Why the build reads the radix of every number
+
+Bun 1.4.3 for Android reads a number wrongly when the radix is left out.
+`parseInt("127")` answers `NaN` there and `127` on a desktop, while
+`parseInt("127", 10)` answers `127` in both. The address library of the
+server reads the parts of an address with `parseInt` and without a radix,
+so the library says that no address is an address, and the server does not
+start.
+
+The build of the phone gives the radix to that call. The rest of the server
+already names the radix, and so does the code of the engine.
+
+The spike `tools/spikes/regex-android.ts` runs the same code on the device
+and prints what it finds, so a new version of Bun that fixes this shows up
+in the log of the spike.
+
 ### Why the guest panel catalog lives in the app's storage
 
 The server reads the catalog of the guest panels the app ships from a
