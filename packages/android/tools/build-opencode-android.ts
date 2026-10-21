@@ -25,9 +25,11 @@
  *   bun packages/android/tools/build-opencode-android.ts
  */
 
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import type { BunPlugin } from 'bun';
 
+const repoRoot = resolve(import.meta.dir, '../../..');
 const cliDir = process.env.OPENCODE_CLI_DIR;
 if (!cliDir) {
   throw new Error('OPENCODE_CLI_DIR must point at the packages/cli folder of the checkout');
@@ -123,10 +125,31 @@ async function createSolidPlugin(from: string): Promise<BunPlugin> {
   return createSolidTransformPlugin();
 }
 
+/**
+ * Bun reads a number wrongly on a phone when the radix of `parseInt` is left
+ * out. The engine uses `parseInt` in a few places without a radix, so the
+ * build puts the rule back before any other module runs.
+ */
+const parseIntPlugin: BunPlugin = {
+  name: 'openchamber-parse-int',
+  setup(build) {
+    build.onLoad({ filter: /packages[/\\]cli[/\\]src[/\\]index\.ts$/ }, async (args) => {
+      const source = await readFile(args.path, 'utf8');
+      const prelude = `import ${JSON.stringify(resolve(repoRoot, 'packages/android/tools/runtime/parse-int.js'))};\n`;
+      // The entry of the CLI starts with a shebang, and that line has to
+      // stay the first one.
+      const patched = source.startsWith('#!')
+        ? `${source.slice(0, source.indexOf('\n') + 1)}${prelude}${source.slice(source.indexOf('\n') + 1)}`
+        : `${prelude}${source}`;
+      return { contents: patched, loader: 'ts' };
+    });
+  },
+};
+
 const result = await Bun.build({
   entrypoints: ['./src/index.ts'],
   tsconfig: './tsconfig.json',
-  plugins: [appAssetsPlugin, solidPlugin, parcelWatcherPlugin, opencodePtyPlugin, pluginRuntimePlugin],
+  plugins: [appAssetsPlugin, solidPlugin, parcelWatcherPlugin, opencodePtyPlugin, pluginRuntimePlugin, parseIntPlugin],
   external: ['node-gyp'],
   format: 'esm',
   minify: true,
