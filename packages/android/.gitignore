@@ -4,3 +4,6 @@ local.properties
 build/
 *.iml
 .idea/
+
+# The binaries the app ships. The build scripts under tools/ produce them.
+prebuilt/

@@ -95,7 +95,7 @@ terminal workloads rely on.
 The phone runs the server as a single file the app extracts to its own
 storage. The server reads three things that sit next to its own modules, and
 a compiled binary has no directory next to it. The build
-(`tools/spikes/build-server-android.ts`) replaces those reads with the content
+(`tools/build-server-android.ts`) replaces those reads with the content
 of the files, so the server code in `packages/web` stays as it is:
 
 | What | Where | How |

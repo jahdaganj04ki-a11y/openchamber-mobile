@@ -5,9 +5,40 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+/**
+ * The binaries the app ships.
+ *
+ * The engine, the server and the helper tools are built by the scripts under
+ * `../tools/` and dropped into `../prebuilt/`. They go into the assets,
+ * because an APK entry cannot be executed in place. The app extracts them
+ * into its own storage on the first launch.
+ *
+ * A build without them still works: the app reports which binary is missing
+ * and the screens that do not need the server still open.
+ */
+val prebuiltBinaries = rootProject.layout.projectDirectory.dir("prebuilt")
+val bundledAssets = layout.buildDirectory.dir("generated/bundledAssets")
+
+val bundleBinaries by tasks.registering(Copy::class) {
+    from(prebuiltBinaries)
+    into(bundledAssets.map { it.dir("binaries") })
+    doFirst {
+        val names = prebuiltBinaries.asFile.list()?.sorted()?.filter { it.isNotEmpty() } ?: emptyList()
+        if (names.isEmpty()) {
+            logger.lifecycle("No binaries were found in $prebuiltBinaries. The app will report them as missing.")
+        } else {
+            logger.lifecycle("The app ships these binaries: ${names.joinToString(", ")}")
+        }
+    }
+}
+
 android {
     namespace = "com.openchamber.android"
     compileSdk = 35
+
+    sourceSets.getByName("main") {
+        assets.srcDir(bundledAssets)
+    }
 
     defaultConfig {
         applicationId = "com.openchamber.android"
@@ -49,6 +80,10 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+tasks.named("preBuild") {
+    dependsOn(bundleBinaries)
 }
 
 dependencies {

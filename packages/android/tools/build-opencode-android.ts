@@ -22,7 +22,7 @@
  *
  *   OPENCODE_CLI_DIR=<checkout>/packages/cli \
  *   OPENCODE_OUTFILE=out/opencode-android \
- *   bun packages/android/tools/spikes/build-opencode-android.ts
+ *   bun packages/android/tools/build-opencode-android.ts
  */
 
 import { resolve } from 'node:path';

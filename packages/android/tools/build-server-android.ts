@@ -3,22 +3,24 @@
  * Compiles the OpenChamber server for Android.
  *
  * The server is the product's logic, so the phone runs the same code the
- * desktop runs. Two things need attention when the server becomes a single
+ * desktop runs. Three things need attention when the server becomes a single
  * binary:
  *
- * - The native modules with no Android build are replaced by stubs. The
- *   pseudoterminal needs a shared library the phone does not have yet, the
- *   file search needs a ripgrep the phone does not have yet, and the
- *   dictation runs through Android's own speech recognizer.
+ * - The native modules with no Android build are replaced by stubs. The file
+ *   search needs a ripgrep the phone does not have yet, and the dictation runs
+ *   through Android's own speech recognizer.
  * - The server reads a few files next to its own modules. A compiled binary
  *   has no directory next to it, so those reads are replaced by the content
  *   of the files. The server code stays as it is.
+ * - The pseudoterminal of `bun-pty` looks for its library next to its own
+ *   module. The phone has its own build of that library, so the library comes
+ *   from `BUN_PTY_LIB` and nothing else.
  *
  * Usage:
  *
  *   SERVER_OUTFILE=out/server-android \
  *   SERVER_TARGET=bun-linux-aarch64-android \
- *   bun packages/android/tools/spikes/build-server-android.ts
+ *   bun packages/android/tools/build-server-android.ts
  */
 
 import { readFileSync } from 'node:fs';
@@ -31,9 +33,6 @@ const outfile = resolve(process.env.SERVER_OUTFILE ?? 'out/server-android');
 const target = process.env.SERVER_TARGET ?? 'bun-linux-aarch64-android';
 
 const stubs: Record<string, string> = {
-  'bun-pty': `export const spawn = () => {
-  throw new Error('The pseudoterminal is not available on this device yet.');
-};`,
   'node-pty': `export const spawn = () => {
   throw new Error('The pseudoterminal is not available on this device yet.');
 };`,
@@ -51,11 +50,15 @@ const stubs: Record<string, string> = {
  *   compiled binary that is always the case, and the phone would get a second
  *   server with the command line options. The phone starts the server
  *   itself, so the command line entry is turned off.
+ * - The pseudoterminal of `bun-pty` looks for its library next to its own
+ *   module, which is a library for a desktop. The phone ships its own build
+ *   of it, and the path to it comes from the environment.
  */
 const patches: {
   module: RegExp;
   pattern: RegExp;
   replacement: string;
+  loader?: 'js' | 'ts';
 }[] = [
   {
     module: /lib\/opencode\/settings-(files|helpers)\.js$/,
@@ -75,6 +78,16 @@ const patches: {
     module: /lib\/opencode\/cli-entry-runtime\.js$/,
     pattern: /const isCliExecution = process\.argv\[1\] === currentFilename;/g,
     replacement: 'const isCliExecution = false;',
+  },
+  {
+    module: /bun-pty[/\\]src[/\\]terminal\.ts$/,
+    pattern: /function resolveLibPath\(\): string \{[\s\S]*?\n\}/g,
+    replacement: `function resolveLibPath(): string {
+	const fromEnv = process.env.BUN_PTY_LIB;
+	if (!fromEnv) throw new Error("The library of the pseudoterminal is missing");
+	return fromEnv;
+}`,
+    loader: 'ts',
   },
   {
     module: /packages\/web\/server\/index\.js$/,
@@ -122,7 +135,7 @@ const patchFilesPlugin: BunPlugin = {
         if (!replaced) {
           throw new Error(`The patch for ${args.path} did not match. The server changed under the build.`);
         }
-        return { contents: patched, loader: 'js' };
+        return { contents: patched, loader: patch.loader ?? 'js' };
       });
     }
   },

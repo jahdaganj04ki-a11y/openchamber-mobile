@@ -32,6 +32,39 @@ jobs:
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      - name: Install the dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build the SDK
+        run: bun run --cwd packages/sdk build
+
+      - name: Check out opencode
+        run: git clone --depth 1 --branch v2.0.32 https://github.com/anomalyco/opencode.git opencode
+
+      - name: Install the dependencies of opencode
+        working-directory: opencode
+        run: |
+          bun install
+          bun install --os="*" --cpu="*" \
+            "@opentui/core@$(bun -e 'console.log(require("./packages/cli/package.json").dependencies["@opentui/core"])')" \
+            "@opencode-ai/pty@$(bun -e 'console.log(require("./packages/cli/package.json").dependencies["@opencode-ai/pty"])')"
+
+      - name: Compile the engine for the phone
+        run: |
+          mkdir -p packages/android/prebuilt
+          OPENCODE_CLI_DIR=opencode/packages/cli \
+          OPENCODE_OUTFILE=packages/android/prebuilt/opencode \
+          OPENCODE_TARGET=bun-linux-aarch64-android \
+          bun packages/android/tools/build-opencode-android.ts
+          file packages/android/prebuilt/opencode
+
+      - name: Compile the server for the phone
+        run: |
+          SERVER_OUTFILE=packages/android/prebuilt/openchamber-server \
+          SERVER_TARGET=bun-linux-aarch64-android \
+          bun packages/android/tools/build-server-android.ts
+          file packages/android/prebuilt/openchamber-server
+
       - name: Check the message catalogs
         run: |
           bun packages/android/tools/generate-catalogs.mjs

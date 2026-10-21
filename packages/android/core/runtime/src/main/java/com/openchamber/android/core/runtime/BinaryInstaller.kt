@@ -15,25 +15,37 @@ import java.io.IOException
 class BinaryInstaller(context: Context, private val paths: DevicePaths) {
 
     /**
-     * The binaries the app ships, and where each one lands.
+     * The binaries the app cannot run without.
      *
-     * The names in `assets/` are the names in the app's private storage. A
-     * binary that is missing from the assets is reported, not skipped, so the
-     * app can tell the user which file to repair.
+     * The server is the product and the engine is what the server drives.
+     * Without one of them the app has nothing to show, so a missing one is an
+     * error the user can repair.
      */
-    private val bundled = listOf(
+    private val required = listOf(
         "openchamber-server",
         "opencode",
+    )
+
+    /**
+     * The binaries the server uses when it finds them.
+     *
+     * `git` drives the source control surface, `rg` the file search, `bash` the
+     * shell of the terminal, and the library of the pseudoterminal the
+     * terminal itself. The server answers with a clear error when one of them
+     * is missing, so a build without them still runs.
+     */
+    private val optional = listOf(
         "git",
         "rg",
         "bash",
+        "librust_pty.so",
     )
 
     class MissingBinaryException(val name: String) :
         IOException("The bundled binary '$name' is not in the assets")
 
-    /** Whether every bundled binary is already extracted and executable. */
-    fun isInstalled(): Boolean = bundled.all { name ->
+    /** Whether every required binary is already extracted and executable. */
+    fun isInstalled(): Boolean = required.all { name ->
         val target = File(paths.binDir, name)
         target.isFile && target.canExecute()
     }
@@ -42,11 +54,14 @@ class BinaryInstaller(context: Context, private val paths: DevicePaths) {
      * Extracts the binaries that are not in place yet.
      *
      * The ones that are already there are left alone, so a restart does not
-     * rewrite 90 MB.
+     * rewrite 90 MB. A binary that the build did not ship is skipped.
      */
     fun install(): List<String> {
+        val shipped = shippedAssets()
         val installed = mutableListOf<String>()
-        for (name in bundled) {
+
+        for (name in required) {
+            if (name !in shipped) throw MissingBinaryException(name)
             val target = File(paths.binDir, name)
             if (target.isFile && target.canExecute()) {
                 installed += name
@@ -55,14 +70,30 @@ class BinaryInstaller(context: Context, private val paths: DevicePaths) {
             extract(name, target)
             installed += name
         }
+
+        for (name in optional) {
+            if (name !in shipped) continue
+            val target = File(paths.binDir, name)
+            if (target.isFile && target.canExecute()) {
+                installed += name
+                continue
+            }
+            extract(name, target)
+            installed += name
+        }
+
         return installed
     }
 
+    /** The names of the binaries this build of the app carries. */
+    private fun shippedAssets(): Set<String> =
+        runCatching { context.assets.list(ASSET_DIR)?.toSet() ?: emptySet() }
+            .getOrDefault(emptySet())
+
     private fun extract(name: String, target: File) {
-        val assetName = "binaries/$name"
         val temporary = File(target.parentFile, "$name.tmp")
         try {
-            context.assets.open(assetName).use { input ->
+            context.assets.open("$ASSET_DIR/$name").use { input ->
                 temporary.outputStream().use { output -> input.copyTo(output) }
             }
             if (!temporary.setExecutable(true, true)) {
@@ -81,4 +112,8 @@ class BinaryInstaller(context: Context, private val paths: DevicePaths) {
     }
 
     private val context: Context = context.applicationContext
+
+    private companion object {
+        const val ASSET_DIR = "binaries"
+    }
 }

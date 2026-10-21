@@ -36,6 +36,15 @@ class DevicePaths(context: Context) {
     val engineBinary: File = File(binDir, "opencode")
 
     /**
+     * The library of the pseudoterminal.
+     *
+     * The terminal of the server opens this library by the path in
+     * `BUN_PTY_LIB`. The phone has its own build of it, because the library
+     * that the package ships is built for a desktop.
+     */
+    val ptyLibrary: File = File(binDir, "librust_pty.so")
+
+    /**
      * The environment the server and the engine run in.
      *
      * `OPENCHAMBER_BUNDLED_OPENCODE_CLI_DIR` is what makes the engine count
@@ -56,6 +65,7 @@ class DevicePaths(context: Context) {
         put("XDG_STATE_HOME", stateHome.absolutePath)
         put("XDG_CACHE_HOME", cacheHome.absolutePath)
         put("PATH", "${binDir.absolutePath}:/system/bin:/system/xbin")
+        put("BUN_PTY_LIB", ptyLibrary.absolutePath)
         put("NO_PROXY", "localhost,127.0.0.1")
         put("no_proxy", "localhost,127.0.0.1")
         put("TMPDIR", cacheHome.absolutePath)

@@ -87,7 +87,7 @@ jobs:
           OPENCODE_CLI_DIR=opencode/packages/cli \
           OPENCODE_OUTFILE=out/opencode-android-arm64 \
           OPENCODE_TARGET=bun-linux-aarch64-android \
-          bun packages/android/tools/spikes/build-opencode-android.ts
+          bun packages/android/tools/build-opencode-android.ts
           file out/opencode-android-arm64
 
       - name: Compile the engine for the emulator
@@ -95,7 +95,7 @@ jobs:
           OPENCODE_CLI_DIR=opencode/packages/cli \
           OPENCODE_OUTFILE=out/opencode-android-x64 \
           OPENCODE_TARGET=bun-linux-x64-android \
-          bun packages/android/tools/spikes/build-opencode-android.ts
+          bun packages/android/tools/build-opencode-android.ts
           file out/opencode-android-x64
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -157,14 +157,14 @@ jobs:
           OPENCODE_CLI_DIR=opencode/packages/cli \
           OPENCODE_OUTFILE=out/opencode-android-x64 \
           OPENCODE_TARGET=bun-linux-x64-android \
-          bun packages/android/tools/spikes/build-opencode-android.ts
+          bun packages/android/tools/build-opencode-android.ts
           file out/opencode-android-x64
 
       - name: Compile the server for the emulator
         run: |
           SERVER_OUTFILE=out/server-android-x64 \
           SERVER_TARGET=bun-linux-x64-android \
-          bun packages/android/tools/spikes/build-server-android.ts
+          bun packages/android/tools/build-server-android.ts
           file out/server-android-x64
 
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
