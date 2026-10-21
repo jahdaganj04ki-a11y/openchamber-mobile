@@ -98,9 +98,14 @@ program. It is not patched over.
 
 | Spike | Question | Status |
 | --- | --- | --- |
-| `bun-android.ts` | Can a compiled Bun binary run on Android? | Runs in CI on an emulator |
-| OpenCode on Android | Can the engine be built and booted for Android? | Waiting for the opencode source at `v2.0.32` |
+| `bun-android.ts` | Can a compiled Bun binary run on Android? | Answered: yes |
+| OpenCode on Android | Can the engine be built and booted for Android? | Running in CI |
 | Server on Android | Can the server boot with its native dependencies? | Waiting for the PTY, git, ripgrep and bash builds |
+
+The Bun spike runs on an Android 15 emulator in CI. The compiled binary starts,
+serves HTTP on the loopback interface, reads and writes files, spawns a child
+process, opens a `bun:sqlite` database and holds a WebSocket. Bun is therefore
+the runtime the server will use on the phone.
 
 ## Verification
 
