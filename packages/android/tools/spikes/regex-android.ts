@@ -35,11 +35,20 @@ console.log(`parseInt without a radix: ${parseInt('127')}`);
 console.log(`parseInt with the radix ten: ${parseInt('127', 10)}`);
 console.log(`parseInt of a zero: ${parseInt('0')}`);
 console.log(`parseInt of a zero with the radix eight: ${parseInt('0', 8)}`);
+console.log(`Number.parseInt without a radix: ${Number.parseInt('127')}`);
+console.log(`parseFloat of a string: ${parseFloat('1.5')}`);
 console.log(`Number of a string: ${Number('127')}`);
 console.log(`a string before a plus: ${+'127'}`);
 console.log(`the whole of a string: ${parseInt('127px')}`);
 console.log(`a slice of a string: ${JSON.stringify('127'.slice(1, 6))}`);
 console.log(`the first character of a string: ${JSON.stringify('127'[0])}`);
+
+// The rule that the engine and the server carry on a phone.
+await import('../runtime/parse-int.js');
+console.log(`parseInt without a radix after the rule: ${parseInt('127')}`);
+console.log(`Number.parseInt without a radix after the rule: ${Number.parseInt('127')}`);
+console.log(`parseInt of a zero after the rule: ${parseInt('0')}`);
+console.log(`parseInt of a hex number after the rule: ${parseInt('0x10')}`);
 
 const app = express();
 try {
