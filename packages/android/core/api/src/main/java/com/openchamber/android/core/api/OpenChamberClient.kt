@@ -120,6 +120,19 @@ class OpenChamberClient(private val transport: RuntimeTransport) {
         return OpenChamberJson.decodeFromString(body)
     }
 
+    /**
+     * Tells the server which directory it should work in.
+     *
+     * The server registers the directory as a project and makes it the active
+     * one, the same way the web UI does when the user picks a folder. The
+     * answer carries the whole settings object, because the server keeps one
+     * list of projects and the phone shows that list.
+     */
+    suspend fun setDirectory(path: String): String {
+        val body = buildJsonObject { put("path", path) }
+        return transport.post("/api/openchamber/directory", body)
+    }
+
     companion object {
         /**
          * The client kind the phone registers under. The server treats

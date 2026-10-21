@@ -28,6 +28,7 @@ class AppContainer(context: Context) {
     val store = SyncStore(scope)
     val preferences = AppPreferences(context)
     val catalogStore = com.openchamber.android.i18n.CatalogStore(context)
+    val projects = com.openchamber.android.projects.ProjectStore(context, supervisor.paths.projectsDir)
 
     private val _pipeline = MutableStateFlow<EventPipeline?>(null)
     val pipeline: StateFlow<EventPipeline?> = _pipeline.asStateFlow()

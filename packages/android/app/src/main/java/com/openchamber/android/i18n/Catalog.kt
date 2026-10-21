@@ -49,7 +49,7 @@ val LocalCatalog = staticCompositionLocalOf { Catalog(emptyMap()) }
  *
  * The English catalog is read once at start, the chosen locale is read when
  * the user picks it. Both live in the assets, written by
- * `packages/android/build/generate-catalogs.mjs`.
+ * `packages/android/tools/generate-catalogs.mjs`.
  */
 class CatalogStore(context: Context) {
 

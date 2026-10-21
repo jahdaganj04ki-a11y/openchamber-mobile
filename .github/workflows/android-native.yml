@@ -30,6 +30,13 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
 
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Check the message catalogs
+        run: |
+          bun packages/android/tools/generate-catalogs.mjs
+          git diff --exit-code -- packages/android/app/src/main/assets/i18n
+
       - name: Build debug APK
         working-directory: packages/android
         run: ./gradlew :app:assembleDebug --stacktrace

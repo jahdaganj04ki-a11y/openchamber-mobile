@@ -19,8 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.DrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -41,15 +44,36 @@ fun AppShell(state: AppUiState, viewModel: AppViewModel) {
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val isWide = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 840
+    var showProjects by remember { mutableStateOf(false) }
+
+    if (showProjects) {
+        ProjectPickerSheet(
+            projects = state.projects,
+            selectedPath = state.directory,
+            onSelect = { project ->
+                viewModel.selectDirectory(project.worktree)
+                showProjects = false
+            },
+            onImportFolder = { tree ->
+                viewModel.importProject(tree)
+                showProjects = false
+            },
+            onClone = { url, name ->
+                viewModel.cloneProject(url, name)
+                showProjects = false
+            },
+            onDismiss = { showProjects = false },
+        )
+    }
 
     if (isWide) {
         Row(Modifier.fillMaxSize()) {
             SessionSidebar(
                 state = state,
                 onSelectSession = viewModel::selectSession,
-                onSelectDirectory = viewModel::selectDirectory,
                 onNewSession = viewModel::createSession,
                 onOpenSettings = { },
+                onOpenProjects = { showProjects = true },
                 modifier = Modifier.width(320.dp),
             )
             HorizontalDivider()
@@ -72,12 +96,15 @@ fun AppShell(state: AppUiState, viewModel: AppViewModel) {
                         viewModel.selectSession(sessionID)
                         scope.launch { drawerState.close() }
                     },
-                    onSelectDirectory = viewModel::selectDirectory,
                     onNewSession = {
                         viewModel.createSession()
                         scope.launch { drawerState.close() }
                     },
                     onOpenSettings = { scope.launch { drawerState.close() } },
+                    onOpenProjects = {
+                        scope.launch { drawerState.close() }
+                        showProjects = true
+                    },
                 )
             }
         },

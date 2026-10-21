@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,9 +43,9 @@ import com.openchamber.android.i18n.LocalCatalog
 fun SessionSidebar(
     state: AppUiState,
     onSelectSession: (String?) -> Unit,
-    onSelectDirectory: (String?) -> Unit,
     onNewSession: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenProjects: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth()) {
@@ -60,6 +61,12 @@ fun SessionSidebar(
                 style = MaterialTheme.typography.titleMedium,
             )
             Row {
+                IconButton(onClick = onOpenProjects) {
+                    Icon(
+                        Icons.Default.Folder,
+                        contentDescription = LocalCatalog.current.t("android.projects.title"),
+                    )
+                }
                 IconButton(onClick = onNewSession) {
                     Icon(
                         Icons.Default.Add,
@@ -78,7 +85,7 @@ fun SessionSidebar(
 
         DirectoryPicker(
             state = state,
-            onSelectDirectory = onSelectDirectory,
+            onOpenProjects = onOpenProjects,
         )
 
         if (state.sessions.isEmpty()) {
@@ -112,7 +119,7 @@ fun SessionSidebar(
 @Composable
 private fun DirectoryPicker(
     state: AppUiState,
-    onSelectDirectory: (String?) -> Unit,
+    onOpenProjects: () -> Unit,
 ) {
     Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
         Text(
@@ -127,19 +134,8 @@ private fun DirectoryPicker(
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.clickable(onClick = onOpenProjects),
         )
-        if (state.projects.isNotEmpty()) {
-            state.projects.take(MAX_PROJECTS).forEach { project ->
-                Text(
-                    text = project.name.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .clickable { onSelectDirectory(project.worktree) }
-                        .padding(vertical = 4.dp),
-                )
-            }
-        }
     }
 }
 
@@ -210,5 +206,3 @@ fun ChatTopBar(
         )
     }
 }
-
-private const val MAX_PROJECTS = 8

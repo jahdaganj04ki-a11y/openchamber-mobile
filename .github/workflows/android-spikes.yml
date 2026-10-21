@@ -79,18 +79,21 @@ jobs:
             "@opencode-ai/pty@$(bun -e 'console.log(require("./packages/cli/package.json").dependencies["@opencode-ai/pty"])')"
 
       - name: Compile the engine for a phone
-        working-directory: opencode/packages/cli
         run: |
-          bun build --compile --target=bun-linux-aarch64-android \
-            ./src/index.ts --outfile ../../../out/opencode-android-arm64
-          file ../../../out/opencode-android-arm64
+          mkdir -p out
+          OPENCODE_CLI_DIR=opencode/packages/cli \
+          OPENCODE_OUTFILE=out/opencode-android-arm64 \
+          OPENCODE_TARGET=bun-linux-aarch64-android \
+          bun packages/android/tools/spikes/build-opencode-android.ts
+          file out/opencode-android-arm64
 
       - name: Compile the engine for the emulator
-        working-directory: opencode/packages/cli
         run: |
-          bun build --compile --target=bun-linux-x64-android \
-            ./src/index.ts --outfile ../../../out/opencode-android-x64
-          file ../../../out/opencode-android-x64
+          OPENCODE_CLI_DIR=opencode/packages/cli \
+          OPENCODE_OUTFILE=out/opencode-android-x64 \
+          OPENCODE_TARGET=bun-linux-x64-android \
+          bun packages/android/tools/spikes/build-opencode-android.ts
+          file out/opencode-android-x64
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

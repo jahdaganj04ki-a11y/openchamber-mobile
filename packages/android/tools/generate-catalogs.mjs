@@ -8,7 +8,7 @@
  *
  * Run it with Bun, which reads the TypeScript modules directly:
  *
- *   bun packages/android/build/generate-catalogs.mjs
+ *   bun packages/android/tools/generate-catalogs.mjs
  */
 
 import { mkdir, writeFile, readdir } from 'node:fs/promises';

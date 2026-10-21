@@ -120,6 +120,39 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
         selectedSession.value = null
         viewModelScope.launch { container.preferences.setLastDirectory(value) }
         refresh()
+        if (value != null) {
+            viewModelScope.launch {
+                val client = container.supervisor.openChamberClient ?: return@launch
+                runCatching { client.setDirectory(value) }
+                    .onFailure { error.value = it.message }
+            }
+        }
+    }
+
+    /**
+     * Copies a folder the user picked into the app's storage and opens it.
+     */
+    fun importProject(tree: android.net.Uri) {
+        viewModelScope.launch {
+            val name = container.projects.displayName(tree)
+            runCatching { container.projects.importTree(tree, name) }
+                .onSuccess { directory -> selectDirectory(directory.absolutePath) }
+                .onFailure { error.value = it.message }
+            projects.value = container.projects.list()
+        }
+    }
+
+    /**
+     * Clones a repository into the app's storage and opens it.
+     */
+    fun cloneProject(url: String, name: String) {
+        viewModelScope.launch {
+            val git = java.io.File(container.supervisor.paths.binDir, "git")
+            runCatching { container.projects.clone(url, name, git) }
+                .onSuccess { directory -> selectDirectory(directory.absolutePath) }
+                .onFailure { error.value = it.message }
+            projects.value = container.projects.list()
+        }
     }
 
     fun selectSession(sessionID: String?) {
@@ -228,21 +261,7 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
         }.onFailure { error.value = it.message }
     }
 
-    private suspend fun loadProjects(): List<Project> {
-        val client = container.supervisor.openChamberClient ?: return emptyList()
-        return runCatching {
-            client.listDirectory(container.supervisor.paths.projectsDir.absolutePath)
-                .entries
-                .filter { it.isDirectory }
-                .map { entry ->
-                    Project(
-                        id = entry.path,
-                        worktree = entry.path,
-                        name = entry.name,
-                    )
-                }
-        }.getOrElse { emptyList() }
-    }
+    private suspend fun loadProjects(): List<Project> = container.projects.list()
 
     class Factory(private val container: AppContainer) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
