@@ -90,6 +90,43 @@ Linux-based and ships neither `procps` nor `/bin/ps`, so the fallback would
 throw and the shutdown path would lose the 20 second grace period that
 terminal workloads rely on.
 
+### Why the server is one compiled binary with three patches
+
+The phone runs the server as a single file the app extracts to its own
+storage. The server reads three things that sit next to its own modules, and
+a compiled binary has no directory next to it. The build
+(`tools/spikes/build-server-android.ts`) replaces those reads with the content
+of the files, so the server code in `packages/web` stays as it is:
+
+| What | Where | How |
+| --- | --- | --- |
+| The settings registry | `lib/opencode/settings-files.js`, `lib/opencode/settings-helpers.js` | The content of `settings-registry.json` goes into the bundle |
+| The gatekeeper program | `lib/spaces/gatekeeper-channel.js` | The content of `gatekeeper-program.cjs` goes into the bundle |
+| The command line entry | `lib/opencode/cli-entry-runtime.js` | The entry is turned off |
+
+The last one matters. A compiled binary is always the main module, so the
+server would start itself a second time with the command line options and
+the phone would run two servers on two ports. The phone starts the server
+through the app, so the command line entry does not run at all.
+
+The build fails when one of the three patches does not match. A server that
+changed under the build is a build that cannot be trusted.
+
+### Why the guest panel catalog lives in the app's storage
+
+The server reads the catalog of the guest panels the app ships from a
+directory next to its own modules. On the phone the app owns that directory
+instead: `tools/server-entry.js` writes an empty catalog into the data
+directory and hands the path to the server. The phone ships no guest panels
+yet, and an empty catalog says exactly that.
+
+### Why the server reports the version of the app
+
+The server reads its version from `packages/web/package.json`, which a
+compiled binary cannot reach. The build writes the version name of the app
+into the bundle instead, so the About surface and the user agent of the
+phone name the build the user actually installed.
+
 ## The spikes
 
 Every spike under `tools/spikes/` answers one question that decides whether
@@ -99,13 +136,51 @@ program. It is not patched over.
 | Spike | Question | Status |
 | --- | --- | --- |
 | `bun-android.ts` | Can a compiled Bun binary run on Android? | Answered: yes |
-| OpenCode on Android | Can the engine be built and booted for Android? | Running in CI |
-| Server on Android | Can the server boot with its native dependencies? | Waiting for the PTY, git, ripgrep and bash builds |
+| OpenCode on Android | Can the engine be built and booted for Android? | Answered: yes |
+| Server on Android | Can the server boot with the engine it manages? | Answered: yes |
+| `pty-android.ts` | Can the phone have a pseudoterminal? | Running in CI |
+| The native tools | Can the phone have git and a search? | Open |
 
 The Bun spike runs on an Android 15 emulator in CI. The compiled binary starts,
 serves HTTP on the loopback interface, reads and writes files, spawns a child
 process, opens a `bun:sqlite` database and holds a WebSocket. Bun is therefore
 the runtime the server will use on the phone.
+
+The engine spike compiles the CLI of OpenCode 2.0.32 for Android the way
+upstream compiles it for the desktop, with three parts turned off: the
+bundled web interface, the file watcher and the terminal of the engine. The
+build of the plugin runtime is the part upstream gets right and that is easy
+to miss: the engine resolves the names of its runtime packages at runtime, so
+the build has to write them into the bundle as static requires. Without that
+the engine starts and dies on `effect/package.json`.
+
+The server spike boots the server on the emulator the way the app boots it,
+with the engine in the folder the server is told about, and asks the server
+for its health and for the health of the engine. The server answers both.
+
+## The native tools the phone still needs
+
+The server drives three programs that a desktop has and Android does not.
+
+| What | What the server does with it | What the phone needs |
+| --- | --- | --- |
+| A pseudoterminal | `bun-pty` opens a shell for the terminal | A build of the library of `bun-pty` for Android |
+| `git` | The server runs `git` from `PATH` for the source control surface | A build of git for Android, or a read-only surface |
+| `rg` | The server runs `rg` for the file search, and answers 501 without it | A build of ripgrep for Android |
+
+The pseudoterminal is the closest of the three. The library of `bun-pty` is
+Rust, and it links against the C library of the device. The C library of
+Android keeps `openpty`, `forkpty` and `login_tty` in its own header
+(`<pty.h>`) instead of the header of the desktop, so the build needs the
+compiler of the NDK and nothing else. The `bun-pty` package takes the path
+of the library through `BUN_PTY_LIB`, so the app ships its own library and
+the server finds it.
+
+`git` and `rg` are the open part. The plan counts the source control surface
+as read-only on the phone if git cannot be provided, and that is a decision
+for the maintainer.
+
+
 
 ## Verification
 
