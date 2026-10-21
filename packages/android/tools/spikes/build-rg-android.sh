@@ -36,6 +36,12 @@ fi
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$clang"
 export CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="$clang"
 
+# The standard library of the target has to be there. The build installs it
+# when it is missing, so the script works with any toolchain.
+if ! rustup target list --installed 2>/dev/null | grep -q "^$target$"; then
+  rustup target add "$target"
+fi
+
 cd "$source"
 cargo build --release --target "$target"
 cp "target/$target/release/rg" "$outfile"

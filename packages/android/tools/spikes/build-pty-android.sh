@@ -37,6 +37,12 @@ fi
 export CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="$clang"
 export CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="$clang"
 
+# The standard library of the target has to be there. The build installs it
+# when it is missing, so the script works with any toolchain.
+if ! rustup target list --installed 2>/dev/null | grep -q "^$target$"; then
+  rustup target add "$target"
+fi
+
 # The terminal of the Rust code needs the `nix` library, and `nix` needs the
 # `termios` crate. That crate knows nothing about Android, although the
 # settings of a terminal have the same layout there as on Linux. So the crate

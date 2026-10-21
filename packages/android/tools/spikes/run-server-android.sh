@@ -54,7 +54,9 @@ adb shell "cd $work_dir && env \
   nohup ./server > $work_dir/server.log 2>&1 &"
 
 port=""
-for attempt in $(seq 1 60); do
+# The server waits for the engine before it reports its port, and the engine
+# is a large binary on a slow device.
+for attempt in $(seq 1 150); do
   line="$(adb shell "grep openchamber.listening $work_dir/server.log 2>/dev/null" | tr -d '\r')"
   if [ -n "$line" ]; then
     port="$(printf '%s' "$line" | sed -n 's/.*"port":\([0-9][0-9]*\).*/\1/p')"
@@ -73,7 +75,7 @@ fi
 echo "the server listens on port $port"
 adb forward "tcp:$port" "tcp:$port"
 
-health="$(curl -sf "http://127.0.0.1:$port/health" 2>/dev/null || true)"
+health="$(curl -sf --max-time 20 "http://127.0.0.1:$port/health" 2>/dev/null || true)"
 if [ -z "$health" ]; then
   echo "The server did not answer /health" >&2
   echo "--- the server log ---" >&2
@@ -89,7 +91,7 @@ case "$health" in
     ;;
 esac
 
-engine="$(curl -sf "http://127.0.0.1:$port/api/opencode/health?wait=60000" 2>/dev/null || true)"
+engine="$(curl -sf --max-time 90 "http://127.0.0.1:$port/api/opencode/health?wait=60000" 2>/dev/null || true)"
 if [ -z "$engine" ]; then
   echo "The server did not answer the health of the engine" >&2
   echo "--- the server log ---" >&2

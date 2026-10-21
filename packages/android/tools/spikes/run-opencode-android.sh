@@ -5,14 +5,19 @@
 # x86_64 build onto the device, makes it executable and asks the engine for
 # its version. Then it boots the engine and asks it for its info route. A
 # binary that cannot start, or an engine that does not answer, fails the job.
+#
+# Every call to the engine writes to a file on the device, and the file is
+# read afterwards. A call that hangs leaves its output behind, so the log
+# shows how far the engine came.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-root="$(cd "$here/../../.." && pwd)"
+root="$(cd "$here/../../../.." && pwd)"
 binary="${SPIKE_BINARY:-$root/out/opencode-android-x64}"
 expected_version="${SPIKE_VERSION:-2.0.32}"
 port="${SPIKE_PORT:-45123}"
 work_dir=/data/local/tmp/opencode-spike
+engine="$work_dir/opencode"
 
 if [ ! -f "$binary" ]; then
   echo "The compiled binary is missing: $binary" >&2
@@ -29,13 +34,33 @@ done
 
 adb shell "rm -rf $work_dir && mkdir -p $work_dir"
 adb push "$binary" /data/local/tmp/opencode-spike/opencode
-adb shell 'chmod 755 /data/local/tmp/opencode-spike/opencode'
+adb shell "chmod 755 $engine && chmod 777 $work_dir"
+
+# Reads a file of the device and waits for it to hold something.
+read_when_ready() {
+  local file="$1"
+  local attempts="$2"
+  local content=""
+  for attempt in $(seq 1 "$attempts"); do
+    content="$(adb shell "cat $file 2>/dev/null" | tr -d '\r')"
+    if [ -n "$content" ]; then
+      printf '%s' "$content"
+      return 0
+    fi
+    sleep 2
+  done
+  printf '%s' "$content"
+  return 1
+}
 
 # The engine writes its data, its config and its logs below the work
-# directory. The shell user of the emulator has no home of its own.
-adb shell "chmod 777 $work_dir"
+# directory. The shell user of the emulator has no home of its own. The
+# engine looks for updates and for the catalog of the models when it starts,
+# and the spike has no use for either.
+engine_env="HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache OPENCODE_DISABLE_AUTOUPDATE=1 OPENCODE_DISABLE_MODELS_FETCH=1"
 
-version="$(adb shell "cd $work_dir && HOME=$work_dir /data/local/tmp/opencode-spike/opencode --version" | tr -d '\r\n')"
+timeout 120 adb shell "cd $work_dir && env $engine_env $engine --version > $work_dir/version.log 2>&1 < /dev/null &" || true
+version="$(read_when_ready "$work_dir/version.log" 60 || true)"
 echo "opencode --version: $version"
 case "$version" in
   *"$expected_version"*) ;;
@@ -51,13 +76,13 @@ esac
 # health of the engine. The engine asks for a password, and the server that
 # manages an engine gives it one.
 password="openchamber-spike"
-adb shell "cd $work_dir && HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache OPENCODE_SERVER_PASSWORD=$password nohup /data/local/tmp/opencode-spike/opencode serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 &" || true
+timeout 120 adb shell "cd $work_dir && env $engine_env OPENCODE_SERVER_PASSWORD=$password $engine serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 < /dev/null &" || true
 
 adb forward "tcp:$port" "tcp:$port"
 
 info=""
 for attempt in $(seq 1 60); do
-  info="$(curl -sf -u "opencode:$password" "http://127.0.0.1:$port/api/info" 2>/dev/null || true)"
+  info="$(curl -sf --max-time 20 -u "opencode:$password" "http://127.0.0.1:$port/api/info" 2>/dev/null || true)"
   if [ -n "$info" ]; then
     break
   fi
