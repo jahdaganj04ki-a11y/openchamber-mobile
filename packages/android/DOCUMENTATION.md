@@ -162,6 +162,10 @@ to miss: the engine resolves the names of its runtime packages at runtime, so
 the build has to write them into the bundle as static requires. Without that
 the engine starts and dies on `effect/package.json`.
 
+The engine answers on an Android 15 emulator with the version `2.0.32` and
+serves its info route. The emulator has no bash, so the shell of the agent
+falls back to the shell of Android.
+
 The server spike boots the server on the emulator the way the app boots it,
 with the engine in the folder the server is told about, and asks the server
 for its health and for the health of the engine. The server answers both.
@@ -184,9 +188,17 @@ compiler of the NDK and nothing else. The `bun-pty` package takes the path
 of the library through `BUN_PTY_LIB`, so the app ships its own library and
 the server finds it.
 
-`git` and `rg` are the open part. The plan counts the source control surface
-as read-only on the phone if git cannot be provided, and that is a decision
-for the maintainer.
+The library reaches the C library through the `termios` crate of Rust, and
+that crate knows nothing about Android. The settings of a terminal have the
+same layout there as on Linux, so the build fetches the crate, tells it
+about Android, and uses it instead of the one from the registry.
+
+`git` and `rg` are the open part. Ripgrep 15.0.0 builds for Android the
+same way the library of the terminal does, and the server finds it on the
+path of the app. Git is a different kind of work: it is a C program with a
+chain of libraries under it, and the plan counts the source control surface
+as read-only on the phone if git cannot be provided. That is a decision for
+the maintainer.
 
 
 
