@@ -125,7 +125,9 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
     fun selectSession(sessionID: String?) {
         selectedSession.value = sessionID
         viewModelScope.launch { container.preferences.setLastSession(sessionID) }
-        if (sessionID != null) loadMessages(sessionID)
+        if (sessionID != null) {
+            viewModelScope.launch { loadMessages(sessionID) }
+        }
     }
 
     fun setDraft(text: String) {

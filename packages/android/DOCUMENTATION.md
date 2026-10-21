@@ -112,5 +112,6 @@ cd packages/android
 ./gradlew :app:testDebugUnitTest
 ```
 
-CI builds the debug APK and runs the Bun spike on an emulator. The workflow is
-`.github/workflows/android-native.yml`.
+CI builds the debug APK and runs the Bun spike on an emulator. The workflows
+are `.github/workflows/android-native.yml` for the build and
+`.github/workflows/android-spikes.yml` for the spikes.

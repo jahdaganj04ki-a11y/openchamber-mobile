@@ -57,7 +57,7 @@ class CatalogStore(context: Context) {
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun load(locale: String): Catalog {
-        val english = read("en")
+        val english = read("en") ?: Catalog(emptyMap())
         val selected = read(locale) ?: english
         selected.fallback = english
         return selected

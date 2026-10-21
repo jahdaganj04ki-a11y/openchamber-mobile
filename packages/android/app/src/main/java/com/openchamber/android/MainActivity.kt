@@ -16,6 +16,7 @@ import com.openchamber.android.core.design.OpenChamberTheme
 import com.openchamber.android.i18n.Catalog
 import com.openchamber.android.i18n.LocalCatalog
 import com.openchamber.android.ui.AppShell
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 

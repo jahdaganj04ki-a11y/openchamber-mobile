@@ -9,12 +9,22 @@ set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/../../.." && pwd)"
-cd "$root"
+binary="${SPIKE_BINARY:-$root/out/bun-android-x64}"
 
-adb root || true
-adb wait-for-device
+if [ ! -f "$binary" ]; then
+  echo "The compiled binary is missing: $binary" >&2
+  exit 1
+fi
+
+# The emulator is up, but adb needs a moment before it answers.
+for attempt in $(seq 1 30); do
+  if adb shell true > /dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
 
 adb shell 'mkdir -p /data/local/tmp/bun-spike'
-adb push out/bun-android-x64 /data/local/tmp/bun-android
+adb push "$binary" /data/local/tmp/bun-android
 adb shell 'chmod 755 /data/local/tmp/bun-android'
 adb shell 'SPIKE_WORK_DIR=/data/local/tmp/bun-spike /data/local/tmp/bun-android'

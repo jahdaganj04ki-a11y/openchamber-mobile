@@ -60,7 +60,7 @@ class AppContainer(context: Context) {
     }
 
     /** Reads the sessions of a directory from the server. */
-    suspend fun refreshSessions(directory: String?): List<com.openchamber.android.core.model.Session> {
+    suspend fun refreshSessions(directory: String? = null): List<com.openchamber.android.core.model.Session> {
         val client = supervisor.openCodeClient ?: return emptyList()
         return runCatching { client.listSessions(directory) }
             .getOrElse { emptyList() }

@@ -29,6 +29,7 @@ import com.openchamber.android.core.design.OpenChamberTheme
 import com.openchamber.android.core.model.Message
 import com.openchamber.android.core.model.Part
 import com.openchamber.android.ui.parts.MessageParts
+import com.openchamber.android.ui.parts.Role
 import com.openchamber.android.ui.prompt.FormCard
 import com.openchamber.android.ui.prompt.PermissionCard
 

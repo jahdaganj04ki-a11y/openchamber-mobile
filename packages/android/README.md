@@ -20,7 +20,8 @@ cd packages/android
 The debug APK lands in `app/build/outputs/apk/debug/`.
 
 CI does the same and uploads the APK as an artifact. The workflow is
-`.github/workflows/android-native.yml`.
+`.github/workflows/android-native.yml`. The feasibility spikes run in
+`.github/workflows/android-spikes.yml`.
 
 ## What still does not work yet
 

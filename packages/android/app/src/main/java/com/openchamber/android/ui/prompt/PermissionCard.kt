@@ -44,8 +44,9 @@ fun PermissionCard(
                 style = MaterialTheme.typography.titleSmall,
             )
             if (!request.message.isNullOrBlank()) {
+                val message = request.message
                 Text(
-                    text = request.message,
+                    text = message,
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
