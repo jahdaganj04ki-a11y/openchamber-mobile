@@ -35,6 +35,15 @@ adb push "$engine_binary" /data/local/tmp/openchamber-spike/bin/opencode
 adb shell 'chmod 755 /data/local/tmp/openchamber-server /data/local/tmp/openchamber-spike/bin/opencode'
 adb shell "mv /data/local/tmp/openchamber-server $work_dir/server"
 
+# The server asks the address library whether a string is an address. The
+# library builds its patterns with `new RegExp`, and the phone should answer
+# the same as a desktop does.
+if [ -f "${SPIKE_REGEX_PROGRAM:-$root/out/regex-android-x64}" ]; then
+  adb push "${SPIKE_REGEX_PROGRAM:-$root/out/regex-android-x64}" /data/local/tmp/openchamber-spike/regex
+  adb shell 'chmod 755 /data/local/tmp/openchamber-spike/regex'
+  adb shell '/data/local/tmp/openchamber-spike/regex' 2>&1 | tr -d '\r' || true
+fi
+
 # Whatever goes wrong, the log of the server is the evidence.
 trap 'echo "--- the server log ---" >&2; adb shell "cat $work_dir/server.log" 2>/dev/null || true' EXIT
 

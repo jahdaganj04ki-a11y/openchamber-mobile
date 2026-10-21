@@ -167,6 +167,11 @@ jobs:
           bun packages/android/tools/build-server-android.ts
           file out/server-android-x64
 
+      - name: Compile the check of the address library
+        run: |
+          bun build --compile --target=bun-linux-x64-android \
+            packages/android/tools/spikes/regex-android.ts --outfile out/regex-android-x64
+
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
           packages: 'platform-tools'
