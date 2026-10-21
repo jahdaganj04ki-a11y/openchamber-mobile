@@ -48,14 +48,16 @@ esac
 # The engine is up while the app waits for it, so the spike boots it the same
 # way the app does: bound to the loopback interface, with its own data
 # directory. The route is the one the OpenChamber server probes for the
-# health of the engine.
-adb shell "cd $work_dir && HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache nohup /data/local/tmp/opencode serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 &" || true
+# health of the engine. The engine asks for a password, and the server that
+# manages an engine gives it one.
+password="openchamber-spike"
+adb shell "cd $work_dir && HOME=$work_dir XDG_DATA_HOME=$work_dir/data XDG_CONFIG_HOME=$work_dir/config XDG_STATE_HOME=$work_dir/state XDG_CACHE_HOME=$work_dir/cache OPENCODE_SERVER_PASSWORD=$password nohup /data/local/tmp/opencode serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 &" || true
 
 adb forward "tcp:$port" "tcp:$port"
 
 info=""
 for attempt in $(seq 1 60); do
-  info="$(curl -sf "http://127.0.0.1:$port/api/info" 2>/dev/null || true)"
+  info="$(curl -sf -u "opencode:$password" "http://127.0.0.1:$port/api/info" 2>/dev/null || true)"
   if [ -n "$info" ]; then
     break
   fi

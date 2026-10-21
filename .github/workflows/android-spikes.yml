@@ -123,3 +123,66 @@ jobs:
           emulator-boot-timeout: 900
           emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: SPIKE_BINARY=${{ github.workspace }}/out/opencode-android-x64 bash packages/android/tools/spikes/run-opencode-android.sh
+
+  server-android:
+    name: Server on Android (spike 0.3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Install the dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build the SDK
+        run: bun run --cwd packages/sdk build
+
+      - name: Check out opencode
+        run: |
+          git clone --depth 1 --branch v2.0.32 https://github.com/anomalyco/opencode.git opencode
+
+      - name: Install the dependencies of opencode
+        working-directory: opencode
+        run: |
+          bun install
+          bun install --os="*" --cpu="*" \
+            "@opentui/core@$(bun -e 'console.log(require("./packages/cli/package.json").dependencies["@opentui/core"])')" \
+            "@opencode-ai/pty@$(bun -e 'console.log(require("./packages/cli/package.json").dependencies["@opencode-ai/pty"])')"
+
+      - name: Compile the engine for the emulator
+        run: |
+          mkdir -p out
+          OPENCODE_CLI_DIR=opencode/packages/cli \
+          OPENCODE_OUTFILE=out/opencode-android-x64 \
+          OPENCODE_TARGET=bun-linux-x64-android \
+          bun packages/android/tools/spikes/build-opencode-android.ts
+          file out/opencode-android-x64
+
+      - name: Compile the server for the emulator
+        run: |
+          SERVER_OUTFILE=out/server-android-x64 \
+          SERVER_TARGET=bun-linux-x64-android \
+          bun packages/android/tools/spikes/build-server-android.ts
+          file out/server-android-x64
+
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools'
+          accept-android-sdk-licenses: true
+
+      - name: Start the emulator
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: 35
+          target: default
+          arch: x86_64
+          profile: Nexus 6
+          cores: 2
+          ram-size: 4096M
+          disable-animations: false
+          disable-spellchecker: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -no-snapshot -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash packages/android/tools/spikes/run-server-android.sh

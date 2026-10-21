@@ -14,6 +14,10 @@
  *   changes over the wire from the app instead.
  * - The terminal of the engine is not used. The server brings its own.
  *
+ * The plugin runtime is built the way upstream builds it: the specifiers of
+ * the runtime packages are resolved in the checkout and written into the
+ * bundle as static requires, so the engine finds them in the binary.
+ *
  * Usage:
  *
  *   OPENCODE_CLI_DIR=<checkout>/packages/cli \
@@ -32,6 +36,7 @@ if (!cliDir) {
 const target = process.env.OPENCODE_TARGET ?? 'bun-linux-aarch64-android';
 const outfile = resolve(process.env.OPENCODE_OUTFILE ?? 'out/opencode-android');
 const version = process.env.OPENCODE_VERSION ?? '2.0.32';
+const channel = process.env.OPENCODE_CHANNEL ?? 'prod';
 
 process.chdir(cliDir);
 
@@ -69,10 +74,57 @@ const opencodePtyPlugin: BunPlugin = {
   },
 };
 
+/**
+ * The plugin runtime resolves its packages with `Bun.resolveSync` and a
+ * name that only exists at runtime, so the bundler cannot follow it. The
+ * build resolves the names in the checkout and writes them into the bundle
+ * as static requires, the way upstream does.
+ */
+const pluginRuntimePlugin = await createPluginRuntimePlugin(cliDir);
+
+async function createPluginRuntimePlugin(from: string): Promise<BunPlugin> {
+  const entry = Bun.resolveSync('@opencode/plugin/runtime-modules', from);
+  const { discoverPluginRuntimeSpecifiers, pluginRuntimeLoaderCode } = await import(entry);
+  const entries = discoverPluginRuntimeSpecifiers();
+  const source = [
+    'export const resolveHostPackageRoots = () => []',
+    'const modules = {',
+    ...[...entries.keys()].map(
+      (specifier) => `  ${JSON.stringify(specifier)}: ${pluginRuntimeLoaderCode(specifier, entries)},`,
+    ),
+    '}',
+    'export const loadRuntimeModules = () => modules',
+  ].join('\n');
+
+  return {
+    name: 'opencode-plugin-runtime',
+    setup(build) {
+      build.onLoad({ filter: /plugin[/\\]src[/\\]runtime-modules\.ts$/ }, () => ({
+        loader: 'ts',
+        contents: source,
+      }));
+      build.onLoad({ filter: /[/\\]internal[/\\]httpApi(?:Scalar|Swagger)\.js$/ }, () => ({
+        loader: 'js',
+        contents:
+          'export const css = ""; export const javascript = \'document.body.textContent = "Scalar/Swagger UI assets are not bundled in OpenCode"\'',
+      }));
+    },
+  };
+}
+
+/** The terminal of the engine is written for Solid. The build needs its transform. */
+const solidPlugin = await createSolidPlugin(cliDir);
+
+async function createSolidPlugin(from: string): Promise<BunPlugin> {
+  const entry = Bun.resolveSync('@opentui/solid/bun-plugin', from);
+  const { createSolidTransformPlugin } = await import(entry);
+  return createSolidTransformPlugin();
+}
+
 const result = await Bun.build({
   entrypoints: ['./src/index.ts'],
   tsconfig: './tsconfig.json',
-  plugins: [appAssetsPlugin, parcelWatcherPlugin, opencodePtyPlugin],
+  plugins: [appAssetsPlugin, solidPlugin, parcelWatcherPlugin, opencodePtyPlugin, pluginRuntimePlugin],
   external: ['node-gyp'],
   format: 'esm',
   minify: true,
@@ -86,13 +138,21 @@ const result = await Bun.build({
     autoloadPackageJson: true,
     target: target as Bun.Build.CompileTarget,
     outfile,
-    execArgv: ['--smol', '--use-system-ca', '--no-warnings', '--'],
+    execArgv: [
+      '--smol',
+      `--user-agent=opencode/${channel}/${version}/cli`,
+      '--use-system-ca',
+      '--no-warnings',
+      '--',
+    ],
   },
   define: {
     OPENCODE_VERSION: `'${version}'`,
     OPENCODE_CLI_NAME: "'opencode'",
-    OPENCODE_CHANNEL: "'prod'",
+    OPENCODE_CHANNEL: `'${channel}'`,
     OPENCODE_ARTIFACT: "'cli'",
+    OPENCODE_LIBC: 'undefined',
+    FFF_LIBC: 'undefined',
   },
 });
 

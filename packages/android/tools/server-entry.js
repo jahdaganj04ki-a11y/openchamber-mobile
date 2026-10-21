@@ -11,9 +11,30 @@
  * app owns the process life cycle, and the server owns the engine.
  */
 
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import { startWebUiServer } from '../../web/server/index.js';
 
 const requestedPort = Number.parseInt(process.env.OPENCHAMBER_PORT || '', 10);
+
+/**
+ * The server reads the catalog of the guest panels the app ships from a
+ * directory next to its own modules. A compiled binary has no directory next
+ * to it, so the phone keeps the catalog in its own storage. The phone ships
+ * no guest panels yet, and an empty catalog says exactly that.
+ */
+const builtInExtensionsDir = await prepareBuiltInExtensionsDir();
+
+async function prepareBuiltInExtensionsDir() {
+  const root = process.env.OPENCHAMBER_BUILTIN_EXTENSIONS_DIR
+    || path.join(process.env.OPENCHAMBER_DATA_DIR || process.cwd(), 'built-in-extensions');
+  await mkdir(root, { recursive: true });
+  const registry = path.join(root, 'registry.json');
+  const catalog = `${JSON.stringify({ version: 1, extensions: [] }, null, 2)}\n`;
+  await writeFile(registry, catalog, { flag: 'wx' }).catch(() => {});
+  return root;
+}
 
 const server = await startWebUiServer({
   port: Number.isFinite(requestedPort) && requestedPort >= 0 ? requestedPort : 0,
@@ -22,6 +43,7 @@ const server = await startWebUiServer({
   attachSignals: false,
   exitOnShutdown: false,
   uiPassword: null,
+  builtInExtensionsDir,
 });
 
 const address = server.httpServer?.address?.();
