@@ -127,6 +127,14 @@ compiled binary cannot reach. The build writes the version name of the app
 into the bundle instead, so the About surface and the user agent of the
 phone name the build the user actually installed.
 
+### Why the binaries are optional except for two
+
+The app cannot run without the server and the engine, so those two are
+required and a missing one is an error the user can repair. `git`, `rg`,
+`bash` and the library of the pseudoterminal are used when they are there.
+The server answers with a clear error when one of them is missing, so a
+build without them still runs.
+
 ## The spikes
 
 Every spike under `tools/spikes/` answers one question that decides whether
@@ -195,3 +203,24 @@ cd packages/android
 CI builds the debug APK and runs the Bun spike on an emulator. The workflows
 are `.github/workflows/android-native.yml` for the build and
 `.github/workflows/android-spikes.yml` for the spikes.
+
+The APK carries the engine and the server in its assets, and the app
+extracts them into its own storage on the first launch. The debug APK is
+about 350 MB, which the plan counts as the price of shipping the engine
+with the app. The build that produces it:
+
+```bash
+mkdir -p packages/android/prebuilt
+OPENCODE_CLI_DIR=opencode/packages/cli \
+OPENCODE_OUTFILE=packages/android/prebuilt/opencode \
+OPENCODE_TARGET=bun-linux-aarch64-android \
+bun packages/android/tools/build-opencode-android.ts
+
+SERVER_OUTFILE=packages/android/prebuilt/openchamber-server \
+SERVER_TARGET=bun-linux-aarch64-android \
+bun packages/android/tools/build-server-android.ts
+```
+
+The Gradle build picks the binaries up from `packages/android/prebuilt/`.
+A build without them still works: the app reports the missing binary and
+the screens that do not need the server still open.

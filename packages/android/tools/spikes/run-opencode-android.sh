@@ -76,7 +76,7 @@ esac
 # health of the engine. The engine asks for a password, and the server that
 # manages an engine gives it one.
 password="openchamber-spike"
-timeout 120 adb shell "cd $work_dir && env $engine_env OPENCODE_SERVER_PASSWORD=$password $engine serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 < /dev/null &" || true
+adb shell "cd $work_dir && env $engine_env OPENCODE_SERVER_PASSWORD=$password $engine serve --port $port --hostname 127.0.0.1 > $work_dir/serve.log 2>&1 < /dev/null &" > /dev/null 2>&1 &
 
 adb forward "tcp:$port" "tcp:$port"
 

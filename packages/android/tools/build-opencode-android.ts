@@ -49,7 +49,9 @@ const appAssetsPlugin: BunPlugin = {
     }));
     build.onLoad({ filter: /^opencode-app-assets$/, namespace: 'opencode' }, () => ({
       loader: 'js',
-      contents: 'export default () => new Uint8Array(0)',
+      // An archive with no assets: the length of the index, then an empty
+      // index. The phone is the interface, so the engine serves no web page.
+      contents: 'export default () => new Uint8Array([2, 0, 0, 0, 123, 125])',
     }));
   },
 };

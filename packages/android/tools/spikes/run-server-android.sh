@@ -35,6 +35,9 @@ adb push "$engine_binary" /data/local/tmp/openchamber-spike/bin/opencode
 adb shell 'chmod 755 /data/local/tmp/openchamber-server /data/local/tmp/openchamber-spike/bin/opencode'
 adb shell "mv /data/local/tmp/openchamber-server $work_dir/server"
 
+# Whatever goes wrong, the log of the server is the evidence.
+trap 'echo "--- the server log ---" >&2; adb shell "cat $work_dir/server.log" 2>/dev/null || true' EXIT
+
 # The app gives the server a home of its own, a data directory of its own and
 # the engine in a folder of its own. The server starts the engine itself and
 # keeps the password between them.
@@ -51,7 +54,7 @@ adb shell "cd $work_dir && env \
   XDG_CACHE_HOME=$work_dir/cache \
   PATH=$work_dir/bin:/system/bin:/system/xbin \
   NO_PROXY=localhost,127.0.0.1 \
-  nohup ./server > $work_dir/server.log 2>&1 &"
+  nohup ./server > $work_dir/server.log 2>&1 < /dev/null &" > /dev/null 2>&1 &
 
 port=""
 # The server waits for the engine before it reports its port, and the engine
